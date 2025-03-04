@@ -122,7 +122,7 @@ $scriptBlock = {
     # Construct the full input and output file paths.
     $inputFile = $file.FullName  # Get the full path of the input file.
     $fileName = [System.IO.Path]::GetFileNameWithoutExtension($inputFile) # Get the file name without the extension.
-    $outputFile = Join-Path -Path $outputFolder -ChildPath ("$fileName" + "_profile.md") # Create the output file path.
+    $outputFile = Join-Path -Path $outputFolder -ChildPath ("$fileName" + ".md") # Create the output file path.
 
     # More diagnostic logging
     Write-Host "Input file: $inputFile"

@@ -22,3 +22,10 @@ go.work
 
 # Log files
 *.log
+
+# JSONl and JSON files
+*.jsonl
+*.json
+
+# Markdown files
+*.md
