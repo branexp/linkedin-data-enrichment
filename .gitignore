@@ -29,3 +29,6 @@ go.work
 
 # Markdown files
 *.md
+
+# CSV files
+*.csv
