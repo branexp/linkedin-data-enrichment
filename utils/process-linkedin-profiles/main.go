@@ -14,12 +14,13 @@ import (
 
 // Configuration struct to hold settings
 type Config struct {
-	InputFolder  string
-	OutputFolder string
-	LogFolder    string
-	LogFile      string
-	MaxWorkers   int
-	Verbose      bool
+	InputFolder   string
+	OutputFolder  string
+	LogFolder     string
+	LogFile       string
+	MaxWorkers    int
+	Verbose       bool
+	FabricCommand string // New field for fabric command
 }
 
 func main() {
@@ -30,6 +31,7 @@ func main() {
 	flag.StringVar(&config.LogFolder, "logdir", "logs", "Folder for storing log files")
 	flag.IntVar(&config.MaxWorkers, "workers", 5, "Maximum number of concurrent workers")
 	flag.BoolVar(&config.Verbose, "verbose", false, "Enable verbose output")
+	flag.StringVar(&config.FabricCommand, "fabric-cmd", "summarize_linkedin_profile", "Fabric command to use for processing")
 	flag.Parse()
 
 	// Set log file path
@@ -45,6 +47,9 @@ func main() {
 
 	// Set up logger
 	logger := log.New(logFile, "", 0)
+
+	// Log the configuration
+	logAndPrint(logger, fmt.Sprintf("INFO: Using fabric command: %s", config.FabricCommand), config.Verbose)
 
 	// Get all JSON files
 	jsonFiles, err := filepath.Glob(filepath.Join(config.InputFolder, "*.json"))
@@ -129,6 +134,7 @@ func processJSONFile(filePath string, config Config, logger *log.Logger, mutex *
 		fmt.Printf("Processing LinkedIn profile JSON: %s\n", filePath)
 		fmt.Printf("Input file: %s\n", filePath)
 		fmt.Printf("Output file: %s\n", outputFilePath)
+		fmt.Printf("Using fabric command: %s\n", config.FabricCommand)
 	}
 
 	// Read the content of the input file
@@ -140,8 +146,8 @@ func processJSONFile(filePath string, config Config, logger *log.Logger, mutex *
 		return
 	}
 
-	// Create a command to run fabric
-	cmd := exec.Command("fabric", "-p", "summarize_linkedin_profile", "-o", outputFilePath)
+	// Create a command to run fabric with the specified command
+	cmd := exec.Command("fabric", "-p", config.FabricCommand, "-o", outputFilePath)
 
 	// Create stdin pipe
 	stdin, err := cmd.StdinPipe()
@@ -158,7 +164,7 @@ func processJSONFile(filePath string, config Config, logger *log.Logger, mutex *
 
 	// Start the command
 	if err := cmd.Start(); err != nil {
-		message := fmt.Sprintf("ERROR: Failed to start fabric command for %s - %v", filePath, err)
+		message := fmt.Sprintf("ERROR: Failed to start fabric command '%s' for %s - %v", config.FabricCommand, filePath, err)
 		logMessage(logger, message, mutex)
 		fmt.Println(message)
 		return
@@ -175,13 +181,13 @@ func processJSONFile(filePath string, config Config, logger *log.Logger, mutex *
 
 	// Wait for the command to finish
 	if err := cmd.Wait(); err != nil {
-		message := fmt.Sprintf("ERROR: Failed to process LinkedIn profile '%s'. Error: %v", filePath, err)
+		message := fmt.Sprintf("ERROR: Failed to process LinkedIn profile '%s' with command '%s'. Error: %v", filePath, config.FabricCommand, err)
 		logMessage(logger, message, mutex)
 		fmt.Println(message)
 		return
 	}
 
-	message := fmt.Sprintf("SUCCESS: Processed LinkedIn profile '%s' successfully.", filePath)
+	message := fmt.Sprintf("SUCCESS: Processed LinkedIn profile '%s' successfully with command '%s'.", filePath, config.FabricCommand)
 	logMessage(logger, message, mutex)
 	if config.Verbose {
 		fmt.Println(message)
